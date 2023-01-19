@@ -1,7 +1,51 @@
+# Simple Fedora CoreOS config for a bare metal server
+# This is a simple config that will install Fedora CoreOS on a bare metal server
+# and configure it to be a Kubernetes worker node.
 variant: fcos
 version: 1.4.0
+
 passwd:
   users:
     - name: core
       ssh_authorized_keys:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCxZhDviV2VIBYLWAdrkSMoTS4RqNZya1OJ6izeDrYmpbTZGqr2CkUf6y+TdqZkngzOdmFO03/DFn3k4O8+XPOv9NoVXZoDWPcxRl4jBEIOR+bB+ZDSWLGCEZGluPCOS1w6TuI4SYkFFLDnBI/w9y/hRogNTZgSaXJolNjkxTO4fQyzUbNa7cShpFQ0sWVe/uKyJXDrPmY3DqBX2G21k0y+/zwOG/n6a6SQapIEY4dMYQSt0KS7tRvkBERwD/Oa/HCYG+EmU4twRGOKHOh/EmGqGyKxY54vY+7wAXL9jChq5fikbMMeGBBUvGySNIT69uiVzc5WlMJCtxk3e0bfSlsTWLTsgMkMorlkFM0EKO+C0Eq+wjcMYZjkyFIx4r7Qz0xzg12OR1UA2Q5ODcWOfNtZ0KGD+wKc3s6flp6HImUFptI9yC9yZY7rLbowAz3ZZapxYl7JTd1uoZNe747uP34/tQgk1Tk4yfIH/wXLxh6vTn4fGpFeN24mfASt7w7qwj1BVTX0UGxSXUfBHMokr/7fCy1PnPmQBVLE4jEWYW2o+R+yGAoizLtWtwmsAKjGzRbCSkH5Fh9ZKA5yv9WsiA8T5sYDLp1a4siF9L5HHEtPveZA8dyoofzm3g/kJw+VDytE4Y8k4N7RaZh/BDRzSIlFFIZ6b4SKis2U5hH5kxEITw== gonzalo@sitehost.co.nz
+
+storage:
+  files:
+    - path: /etc/dnf/modules.d/crio-o.module
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [crio]
+          name=cri-o
+          stream=1.21.1
+          profiles=
+          state=enabled
+    - path: /etc/yum.repos.d/kubernetes.repo
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [kubernetes]
+          name=Kubernetes
+          baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+          enabled=1
+          gpgcheck=1
+          repo_gpgcheck=1
+          gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+            https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    - path: /etc/modules-load.d/br_netfilter.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          br_netfilter
+    - path: /etc/sysctl.d/kubernetes.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          net.bridge.bridge-nf-call-iptables  = 1
+          net.ipv4.ip_forward                 = 1
+          net.bridge.bridge-nf-call-ip6tables = 1
